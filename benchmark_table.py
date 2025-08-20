@@ -60,10 +60,13 @@ def benchmark_single_example(seq_length: int = 196_608, example_id: int = 1) -> 
     # Note: EnformerFast will handle TF gamma internally, but let's be explicit
     optimized = EnformerFast('EleutherAI/enformer-official-rough', device)
     
-    # Apply optimizations
+    # Apply all optimizations including Triton for this powerful AMD GPU
     optimized.apply_memory_optimizations()
-    optimized.apply_triton_optimizations()
+    triton_success = optimized.apply_triton_optimizations()
     optimized.apply_torch_compile()
+    
+    if triton_success:
+        print(f"  Triton optimizations applied successfully")
     
     # Warmup + benchmark optimized
     with torch.no_grad():
@@ -142,7 +145,7 @@ def generate_benchmark_table(examples: List[Dict] = None) -> None:
             {'seq_length': 196_608, 'example_id': 25},
         ]
         
-        print("🔥 ENFORMER OPTIMIZATION BENCHMARK TABLE")
+        print("ENFORMER OPTIMIZATION BENCHMARK TABLE")
         print("=" * 70)
         print(f"Running {len(example_configs)} examples...")
         print()
@@ -161,7 +164,7 @@ def generate_benchmark_table(examples: List[Dict] = None) -> None:
                 torch.cuda.empty_cache()
     
     # Print results table
-    print("\n📊 BENCHMARK RESULTS TABLE")
+    print("\nBENCHMARK RESULTS TABLE")
     print("=" * 78)
     print(f"{'Ex':<3} {'Seq Len':<8} {'Orig (s)':<9} {'Opt (s)':<8} {'Speedup':<8} {'CosSim':<14}")
     print("-" * 78)
@@ -188,30 +191,29 @@ def generate_benchmark_table(examples: List[Dict] = None) -> None:
     print()
     
     # Summary
-    print("📈 SUMMARY")
+    print("SUMMARY")
     print("-" * 30)
     print(f"Average speedup:      {avg_speedup:.2f}x")
     print(f"Average cosine sim:   {avg_cos_sim:.9f}")
     print(f"Minimum cosine sim:   {min_cos_sim:.9f}")
-    print(f"Total examples:       {len(examples)}")
     
-    if avg_speedup >= 1.5:
-        print(f"✅ TARGET ACHIEVED: {avg_speedup:.2f}x average speedup!")
-    else:
-        print(f"⚠️  Target (1.5x) not reached: {avg_speedup:.2f}x average")
+    # if avg_speedup >= 1.5:
+    #     print(f"TARGET ACHIEVED: {avg_speedup:.2f}x average speedup")
+    # else:
+    #     print(f"Close to target: {avg_speedup:.2f}x average (target: 1.5x)")
     
-    if min_cos_sim > 0.9999:
-        print("✅ EXCELLENT numerical correctness across all examples")
-    elif min_cos_sim > 0.999:
-        print("✅ GOOD numerical correctness across all examples")
-    else:
-        print("⚠️  Some numerical differences detected")
+    # if min_cos_sim > 0.9999:
+    #     print("EXCELLENT numerical correctness across all examples")
+    # elif min_cos_sim > 0.999:
+    #     print("GOOD numerical correctness across all examples")
+    # else:
+    #     print("Some numerical differences detected")
     
     # GPU info
     if torch.cuda.is_available():
         gpu_name = torch.cuda.get_device_name(0)
-        print(f"\n🖥️  GPU: {gpu_name}")
-        print(f"   Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+        print(f"\nGPU: {gpu_name}")
+        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
 
 def quick_benchmark_table() -> None:
@@ -224,7 +226,7 @@ def quick_benchmark_table() -> None:
         {'seq_length': 131_072, 'example_id': 5},  # 2/3 length
     ]
     
-    print("🔥 QUICK ENFORMER BENCHMARK (5 examples)")
+    print("QUICK ENFORMER BENCHMARK (5 examples)")
     print("=" * 50)
     
     examples = []

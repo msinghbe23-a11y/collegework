@@ -185,8 +185,8 @@ class EnformerFast:
             compute_capability = torch.cuda.get_device_capability(0)
             bf16_supported = torch.cuda.is_bf16_supported()
             
-            # Determine if this is a modern GPU (L4, L40S, A100, H100, etc.)
-            modern_gpu = any(gpu in gpu_name.upper() for gpu in ['L4', 'L40', 'A100', 'H100', 'V100', 'RTX 40', 'RTX 30'])
+            # Determine if this is a modern GPU (L4, L40S, A100, H100, AMD MI300X, etc.)
+            modern_gpu = any(gpu in gpu_name.upper() for gpu in ['L4', 'L40', 'A100', 'H100', 'V100', 'RTX 40', 'RTX 30', 'MI300', 'MI250', 'MI210'])
             
             return {
                 'name': gpu_name,
